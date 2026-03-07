@@ -232,6 +232,71 @@
 
     #embedContainer iframe { width: 100%; height: 100%; border: none; }
 
+    /* Nytt: fake loader */
+    #iframeLoader {
+      position: absolute;
+      inset: 0;
+      z-index: 6;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0, 0, 0, 0.72);
+      backdrop-filter: blur(4px);
+      pointer-events: none;
+    }
+
+    #iframeLoader.show {
+      display: flex;
+    }
+
+    .loader-box {
+      width: min(460px, 85%);
+      text-align: center;
+      padding: 22px 20px 18px;
+      border-radius: 16px;
+      background: rgba(10, 10, 10, 0.78);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      box-shadow: 0 12px 24px rgba(0, 0, 0, 0.45);
+    }
+
+    .loader-title {
+      font-size: 22px;
+      font-weight: 800;
+      margin-bottom: 12px;
+      letter-spacing: 1px;
+    }
+
+    .loader-track {
+      width: 100%;
+      height: 14px;
+      border-radius: 999px;
+      overflow: hidden;
+      background: rgba(255, 255, 255, 0.15);
+      border: 1px solid rgba(255, 255, 255, 0.22);
+    }
+
+    .loader-fill {
+      width: 0%;
+      height: 100%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, var(--accent-dark), var(--accent), #fff);
+      background-size: 220% 100%;
+      animation: loaderShine 1.2s linear infinite;
+      transition: width .14s ease;
+    }
+
+    @keyframes loaderShine {
+      0% { background-position: 0% 0; }
+      100% { background-position: 220% 0; }
+    }
+
+    .loader-message {
+      margin-top: 10px;
+      font-size: 14px;
+      opacity: 0.9;
+      min-height: 20px;
+    }
+
     .fullscreen-btn {
       position: absolute;
       bottom: 10px;
@@ -242,6 +307,7 @@
       background: linear-gradient(135deg, var(--accent-dark), var(--accent));
       color: white;
       cursor: pointer;
+      z-index: 7;
     }
 
     .games-grid {
@@ -368,6 +434,8 @@
       .sidebar-btn { font-size: 15px; padding: 10px; }
       .sidebar-btn .icon { width: 22px; font-size: 18px; }
       .main { padding: 16px; }
+      .loader-title { font-size: 20px; }
+      .loader-message { font-size: 13px; }
     }
   </style>
 </head>
@@ -398,6 +466,15 @@
       </div>
 
       <div id="embedContainer">
+        <div id="iframeLoader">
+          <div class="loader-box">
+            <div class="loader-title">Laddar</div>
+            <div class="loader-track">
+              <div id="loaderFill" class="loader-fill"></div>
+            </div>
+            <div id="loaderMessage" class="loader-message"></div>
+          </div>
+        </div>
         <iframe id="gameFrame"></iframe>
         <button class="fullscreen-btn" onclick="toggleFullscreen()">Fullscreen</button>
       </div>
@@ -450,7 +527,27 @@
     const sidebar = document.getElementById("sidebar");
     const sidebarOverlay = document.getElementById("sidebarOverlay");
     const menuToggle = document.getElementById("menuToggle");
+    const iframeLoader = document.getElementById("iframeLoader");
+    const loaderFill = document.getElementById("loaderFill");
+    const loaderMessage = document.getElementById("loaderMessage");
     const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
+
+    // Skriv/ändra egna meddelanden här:
+    const loadingMessages = [
+      "Jag är tuff",
+      "V2 eller V4?",
+      "Coola Mattespel e bäst",
+      "Vet lowk ej vad jag ska skriva här",
+      "Super sigma tuff boi spel laddas... typ, kanske, vet ej",
+      "Ingen vet vem jag är",
+      ":(",
+      "Mondagar e inte kul",
+      "Laddar det som laddningen laddar som laddar laddningen"
+    ];
+
+    let fakeLoadInterval = null;
+    let fakeLoadTimeout = null;
+    let currentLoadId = 0;
 
     const displayName = (f) => {
       const raw = f.replace(/^cl/i, "").trim();
@@ -483,6 +580,44 @@
     document.addEventListener("keydown", (e) => {
       if (e.key === "Escape") closeSidebar();
     });
+
+    function startFakeLoader() {
+      currentLoadId += 1;
+      const loadId = currentLoadId;
+
+      clearInterval(fakeLoadInterval);
+      clearTimeout(fakeLoadTimeout);
+
+      loaderFill.style.width = "0%";
+      loaderMessage.textContent = loadingMessages[Math.floor(Math.random() * loadingMessages.length)];
+      iframeLoader.classList.add("show");
+
+      let progress = 0;
+      fakeLoadInterval = setInterval(() => {
+        progress += Math.random() * 9 + 5;
+        if (progress > 92) progress = 92;
+        loaderFill.style.width = `${progress}%`;
+      }, 110);
+
+      // failsafe om iframe-event inte triggas
+      fakeLoadTimeout = setTimeout(() => finishFakeLoader(loadId), 4000);
+
+      return loadId;
+    }
+
+    function finishFakeLoader(loadId) {
+      if (loadId !== currentLoadId) return;
+
+      clearInterval(fakeLoadInterval);
+      clearTimeout(fakeLoadTimeout);
+
+      loaderFill.style.width = "100%";
+      setTimeout(() => {
+        if (loadId !== currentLoadId) return;
+        iframeLoader.classList.remove("show");
+        loaderFill.style.width = "0%";
+      }, 220);
+    }
 
     function renderRecommended() {
       recommendedRow.innerHTML = "";
@@ -565,8 +700,11 @@
     }
 
     function openGame(game) {
-      gameFrame.src = `UGS-Files/${game}.html`;
+      const loadId = startFakeLoader();
+
       embedContainer.style.display = "block";
+      gameFrame.onload = () => finishFakeLoader(loadId);
+      gameFrame.src = `UGS-Files/${game}.html`;
 
       if (!recentGames.includes(game)) {
         recentGames.unshift(game);
@@ -593,8 +731,12 @@
     }
 
     function openIframe(url) {
+      const loadId = startFakeLoader();
+
       embedContainer.style.display = "block";
+      gameFrame.onload = () => finishFakeLoader(loadId);
       gameFrame.src = url;
+
       gamesGrid.style.display = "none";
       recommendedSection.style.display = "none";
     }
