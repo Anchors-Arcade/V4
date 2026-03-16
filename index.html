@@ -500,6 +500,27 @@
 
     .game-card { position: relative; }
 
+    .game-thumb {
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      border-radius: 12px;
+      margin-bottom: 10px;
+      background: linear-gradient(135deg, rgba(255,255,255,.08), rgba(255,255,255,.02));
+      border: 1px solid rgba(255,255,255,.16);
+      object-fit: cover;
+      display: block;
+    }
+
+    .game-thumb.fallback {
+      display: grid;
+      place-items: center;
+      font-size: 28px;
+      font-weight: 900;
+      color: rgba(255,255,255,.9);
+      letter-spacing: 1px;
+      text-shadow: 0 4px 12px rgba(0,0,0,.45);
+    }
+
     .game-btn {
       width: 100%;
       padding: 22px;
@@ -1146,6 +1167,45 @@
       });
     };
 
+    function getGameThumbCandidates(file) {
+      return [
+        `UGS-Files/thumbnails/${file}.webp`,
+        `UGS-Files/thumbnails/${file}.png`,
+        `UGS-Files/${file}.webp`,
+        `UGS-Files/${file}.png`,
+        `UGS-Files/${file}.jpg`,
+        `UGS-Files/${file}.jpeg`
+      ];
+    }
+
+    function createGameThumb(file) {
+      const candidates = getGameThumbCandidates(file);
+      const img = document.createElement("img");
+      img.className = "game-thumb";
+      img.alt = `Förhandsbild för ${displayName(file)}`;
+      img.loading = "lazy";
+
+      let i = 0;
+      const tryNext = () => {
+        if (i >= candidates.length) {
+          const fallback = document.createElement("div");
+          fallback.className = "game-thumb fallback";
+          const initials = displayName(file).split(/\s+/).map((p) => p[0] || "").join("").slice(0, 2).toUpperCase();
+          fallback.textContent = initials || "🎮";
+          return fallback;
+        }
+        img.src = candidates[i++];
+        return img;
+      };
+
+      img.onerror = () => {
+        const next = tryNext();
+        if (next !== img && img.parentElement) img.replaceWith(next);
+      };
+
+      return tryNext();
+    }
+
     function openSidebar() {
       sidebar.classList.add("open");
       sidebarOverlay.classList.add("show");
@@ -1503,7 +1563,7 @@ function showInventory() {
       picks.forEach((file) => {
         const btn = document.createElement("button");
         btn.className = "game-btn recommended-btn";
-        btn.textContent = displayName(file);
+        btn.append(createGameThumb(file), document.createTextNode(displayName(file)));
         btn.onclick = () => openGame(file);
         recommendedRow.appendChild(btn);
       });
@@ -1551,7 +1611,7 @@ function showInventory() {
 
           const b = document.createElement("button");
           b.className = "game-btn";
-          b.textContent = displayName(file);
+          b.append(createGameThumb(file), document.createTextNode(displayName(file)));
           b.onclick = () => openGame(file);
 
           const f = document.createElement("span");
