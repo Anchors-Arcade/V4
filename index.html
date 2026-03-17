@@ -353,6 +353,7 @@
     }
 
     /* NYTT: Aktiva spelare */
+
     .active-players {
       margin-top: 8px;
       font-size: 15px;
@@ -1020,7 +1021,8 @@
     @media (max-width: 768px) {
       .header h1 { font-size: 34px; }
       .subtitle { font-size: 14px; letter-spacing: 1px; }
-      .active-players { font-size: 12px; } /* NYTT */
+
+    .active-players { font-size: 12px; } /* NYTT */
       .menu-toggle { top: 12px; left: 12px; width: 42px; height: 42px; font-size: 24px; }
       .sidebar { width: 190px; padding-top: 66px; }
       .sidebar-btn { font-size: 15px; padding: 10px; }
@@ -1100,7 +1102,7 @@
       <div class="header">
         <h1>Coola Mattespel V4</h1>
         <p class="subtitle">Cool sida med coola mattespel!</p>
-        <p id="activePlayers" class="active-players">Aktiva spelare: ...</p> <!-- NYTT -->
+                <p id="activePlayers" class="active-players">Aktiva spelare: ...</p> <!-- NYTT -->
         <div class="search-box">
          <input id="searchInput" placeholder="Sök spel snabbt..." oninput="filterGames()" />
          <div id="searchMeta" class="search-meta"></div>
@@ -2529,14 +2531,48 @@ function showInventory() {
       renderRoadmap();
     }
 
+    function hashEffectToHue(effect = "") {
+      let h = 0;
+      for (let i = 0; i < effect.length; i++) h = (h * 31 + effect.charCodeAt(i)) % 360;
+      return h;
+    }
+
+    function getEffectPerk(item) {
+      const effect = item?.effect || item?.id || "effect";
+      const hue = hashEffectToHue(effect);
+      return {
+        color: `hsl(${hue} 88% 64%)`,
+        label: `${item.title}: färgaccent + glow i profilkortet`
+      };
+    }
+
     function buildProfileVisual(user) {
       const inv = user?.inventory || {};
       const equipped = user?.equipped || {};
       const owned = shopItems.filter((it) => inv[it.id]);
       const active = owned.filter((it) => equipped[it.id]);
       const lv = getLevelFromXp(user?.xp || 0);
-      const badges = active.map((it) => `<span class="tag owned">${it.title}</span>`).join("");
-      return `<div class="profile-visual-card">
+
+      const badges = active.map((it) => {
+        const perk = getEffectPerk(it);
+        return `<span class="tag owned" style="border-color:${perk.color}; color:${perk.color}">${it.title}</span>`;
+      }).join("");
+
+      const perkList = active.map((it) => {
+        const perk = getEffectPerk(it);
+        return `<div class="profile-stat" style="border-color:${perk.color}; box-shadow: 0 0 0 1px ${perk.color}33 inset;">✨ ${perk.label}</div>`;
+      }).join("");
+
+      const glowLayers = active.slice(0, 8).map((it, idx) => {
+        const perk = getEffectPerk(it);
+        return `0 0 ${14 + idx * 2}px ${perk.color}${idx < 2 ? '' : '55'}`;
+      }).join(', ');
+
+      const dynamicStyle = glowLayers
+        ? `style="border-color: rgba(255,255,255,.32); box-shadow: ${glowLayers}, 0 14px 24px rgba(0,0,0,.35);"`
+        : "";
+
+      return `<div class="profile-visual-card" ${dynamicStyle}>
         <div class="profile-visual-name">${user?.username || "Gäst"}${user?.verified ? " ✔️" : ""}</div>
         <div class="profile-visual-stats">
           <div class="profile-stat">🏅 Level <b>${lv.level}</b></div>
@@ -2545,6 +2581,7 @@ function showInventory() {
           <div class="profile-stat">🎒 Items <b>${owned.length}</b></div>
         </div>
         <div class="profile-badges">${badges || '<span class="tag missing">Inga aktiva effekter</span>'}</div>
+        <div class="profile-visual-stats" style="margin-top:10px;">${perkList || '<div class="profile-stat">Aktivera items i inventory för profileffekter.</div>'}</div>
       </div>`;
     }
 
