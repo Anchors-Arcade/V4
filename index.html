@@ -1151,8 +1151,8 @@ function openPanelOverlay(name){
   }
 }
 function openBrowser(type){
-  var _bTitles={ai:'🤖 Mattespel AI',browser:'🌐 Browser',discord:'🟣 Discord'};
-  var _loaderTitles={ai:'Mattespel AI',browser:'Browser',discord:'Discord'};
+  var _bTitles={ai:'🤖 Mattespel AI',browser:'🌐 Browser',discord:'🟣 Discord',suggest:'💡 Förslag'};
+  var _loaderTitles={ai:'Mattespel AI',browser:'Browser',discord:'Discord',suggest:'Förslag'};
   var bTitle=_bTitles[type]||'🌐 Browser';
   showLoader(_loaderTitles[type]||'Loading');
   setTimeout(function(){
@@ -1169,7 +1169,12 @@ function openBrowser(type){
     else{if(win&&type!=='ai'){win.style.width='';win.style.height='';}}
     overlay.classList.add('open');
     frame.onload=function(){hideLoader();frame.onload=null;};
-    var srcMap={'ai':'https://studio.pickaxe.co/STUDIOGX4LHRY55GYHQ15/295XP68K97','browser':'https://mb.webs.vc','discord':'UGS-Files/discord.html'};
+    var srcMap={
+      'ai':'https://studio.pickaxe.co/STUDIOGX4LHRY55GYHQ15/295XP68K97',
+      'browser':'https://mb.webs.vc',
+      'discord':'UGS-Files/discord.html',
+      'suggest':'https://docs.google.com/forms/d/e/1FAIpQLScUxR7Ychb0ivMguYI-3BHwb8D3ZH2x7n1vkpXuYjNeVlU3Cg/viewform?usp=header'
+    };
     frame.src=srcMap[type]||'UGS-Files/browser.html';
   },80);
 }
@@ -2768,10 +2773,10 @@ function chatKey(e){if(e.key==="Enter")sendChat();}
 function submitSuggestion(){
   var g=document.getElementById("sugGame").value.trim();
   if(!g){toast("Fyll i spelnamn");return;}
-  window.open("https://docs.google.com/forms/d/e/1FAIpQLScUxR7Ychb0ivMguYI-3BHwb8D3ZH2x7n1vkpXuYjNeVlU3Cg/viewform?usp=header","_blank");
+  openBrowser('suggest');
   document.getElementById("sugGame").value="";
   document.getElementById("sugText").value="";
-  toast("Öppnade formuläret för förslag");
+  toast("Öppnade formuläret i inbyggt fönster");
   if(state.user)addCoins(5,"Skickade förslag");
 }
 
