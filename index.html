@@ -500,7 +500,7 @@ html,body{height:100%;font-family:'Segoe UI',system-ui,sans-serif;background:var
     <button class="sideNavBtn" onclick="goHome()"><span class="sideNavIcon">🏠</span><span class="sideNavLabel">Hem</span></button>
     <button class="sideNavBtn active" data-tab="favoriter" onclick="openPanelOverlay('fav')"><span class="sideNavIcon">⭐</span><span class="sideNavLabel" data-i18n="nav_favs">Favorites</span></button>
     <button class="sideNavBtn" onclick="openProfileWindow()"><span class="sideNavIcon">👤</span><span class="sideNavLabel" data-i18n="nav_profile">Profile</span></button>
-    <button class="sideNavBtn" onclick="closeSidebar();openPanelOverlay('forslag')"><span class="sideNavIcon">💡</span><span class="sideNavLabel" data-i18n="nav_suggest">Förslag</span></button>
+    <button class="sideNavBtn" onclick="closeSidebar();openBrowser('suggest')"><span class="sideNavIcon">💡</span><span class="sideNavLabel" data-i18n="nav_suggest">Förslag</span></button>
     <button class="sideNavBtn" onclick="openSoundboardWindow()"><span class="sideNavIcon">🎵</span><span class="sideNavLabel">Soundboard</span></button>
     <button class="sideNavBtn" onclick="openBrowser('ai')"><span class="sideNavIcon">🤖</span><span class="sideNavLabel">AI</span></button>
     <button class="sideNavBtn" onclick="openBrowser('browser')"><span class="sideNavIcon">🌐</span><span class="sideNavLabel">Browser</span></button>
@@ -516,7 +516,6 @@ html,body{height:100%;font-family:'Segoe UI',system-ui,sans-serif;background:var
     <div class="sidePanel active" id="panel_favoriter"></div>
     <div class="sidePanel" id="panel_profil"></div>
     <div class="sidePanel" id="panel_teman"></div>
-    <div class="sidePanel" id="panel_forslag"></div>
     <div class="sidePanel" id="panel_quests"></div>
     <div class="sidePanel" id="panel_butik"></div>
     <div class="sidePanel" id="panel_inventory"></div>
@@ -714,18 +713,6 @@ html,body{height:100%;font-family:'Segoe UI',system-ui,sans-serif;background:var
   <div class="panelWin">
     <div class="panelHead"><h3>⚙️ Inställningar</h3><button class="closeBtn" onclick="closePanelOverlay('settings')">✕</button></div>
     <div class="panelBody" id="settingsOverlayBody"></div>
-  </div>
-</div>
-<div class="panelOverlay" id="forslagOverlay" onclick="if(event.target===this)closePanelOverlay('forslag')">
-  <div class="panelWin" style="max-width:480px">
-    <div class="panelHead"><h3>💡 <span data-i18n="sugTitle">Föreslå ett spel</span></h3><button class="closeBtn" onclick="closePanelOverlay('forslag')">✕</button></div>
-    <div class="panelBody">
-      <div class="sugForm" style="margin-top:4px">
-        <input type="text" id="sugGame" data-i18n-ph="sugPlaceholder1" placeholder="Spelnamn..." style="pointer-events:auto;cursor:text">
-        <textarea id="sugText" data-i18n-ph="sugPlaceholder2" placeholder="Beskrivning eller länk..." style="pointer-events:auto;cursor:text;min-height:90px"></textarea>
-        <button class="pill primary" onclick="submitSuggestion()" style="justify-content:center;margin-top:4px;width:100%"><span data-i18n="sugBtn">Skicka förslag</span></button>
-      </div>
-    </div>
   </div>
 </div>
 <div class="panelOverlay" id="linksOverlay" onclick="if(event.target===this)closePanelOverlay('links')">
@@ -1134,7 +1121,6 @@ function renderRecommendedSection(){
 var _overlayRenders={fav:renderFavsPanel,quests:function(){renderQuestsPanel(document.getElementById('questsOverlayBody'));},butik:renderShopPanel,admin:renderAdminPanel,changelog:renderChangelogPanel,achievements:function(){renderAchievementsPanel(document.getElementById('achievementsOverlayBody'));},
 leaderboard:function(){renderLeaderboardPanel(document.getElementById('leaderboardOverlayBody'));},
 settings:function(){renderSettingsPanel(document.getElementById('settingsOverlayBody'));},
-forslag:function(){renderForslagPanel(document.getElementById('forslagOverlayBody'));},
 links:renderLinksPanel};
 function openPanelOverlay(name){
   closeSidebar();
@@ -1797,7 +1783,7 @@ function switchSideTab(tab){
   var panel=document.getElementById("panel_"+tab);
   if(panel){panel.classList.add("active");
     panel.style.animation="none";panel.offsetHeight;panel.style.animation="panelIn .25s ease";
-    function renderForslagPanel(targetEl){var el=targetEl||document.getElementById('panel_forslag');if(!el)return;el.innerHTML='<div class="sideSection"><h4>'+T('sugTitle')+'</h4><div class="sugForm"><input type="text" id="sugGame" placeholder="'+T('sugPlaceholder1')+'" data-i18n-ph="sugPlaceholder1"><textarea id="sugText" placeholder="'+T('sugPlaceholder2')+'" data-i18n-ph="sugPlaceholder2"></textarea><button class="pill primary" onclick="submitSuggestion()" style="justify-content:center;margin-top:2px">'+T('sugBtn')+'</button></div></div>';}var renders={favoriter:renderFavsPanel,teman:renderThemePanel,quests:renderQuestsPanel,forslag:renderForslagPanel,butik:renderShopPanel,instaellningar:renderSettingsPanel,profil:renderProfilePanel,admin:renderAdminPanel,updates:renderUpdatesPanel,inventory:renderInventoryPanel,leaderboard:renderLeaderboardPanel,achievements:function(){renderAchievementsPanel(document.getElementById('panel_achievements'));}};
+    var renders={favoriter:renderFavsPanel,teman:renderThemePanel,quests:renderQuestsPanel,butik:renderShopPanel,instaellningar:renderSettingsPanel,profil:renderProfilePanel,admin:renderAdminPanel,updates:renderUpdatesPanel,inventory:renderInventoryPanel,leaderboard:renderLeaderboardPanel,achievements:function(){renderAchievementsPanel(document.getElementById('panel_achievements'));}};
     if(renders[tab])renders[tab]();
   }
 }
@@ -2770,16 +2756,6 @@ function sendChat(){
   }
 }
 function chatKey(e){if(e.key==="Enter")sendChat();}
-function submitSuggestion(){
-  var g=document.getElementById("sugGame").value.trim();
-  if(!g){toast("Fyll i spelnamn");return;}
-  openBrowser('suggest');
-  document.getElementById("sugGame").value="";
-  document.getElementById("sugText").value="";
-  toast("Öppnade formuläret i inbyggt fönster");
-  if(state.user)addCoins(5,"Skickade förslag");
-}
-
 function adminBroadcast(){var msg=document.getElementById('adminBroadcastMsg');if(!msg||!msg.value.trim())return toast('Skriv ett meddelande','error');var txt='📢 '+msg.value.trim();if(_rtdb){_insertChat({username:'[ADMIN]',text:txt,timestamp:Date.now(),is_admin:true,to:'all',verified:true},function(){loadChatMsgs();});}else{var msgs=JSON.parse(localStorage.getItem('globalChat')||'[]');msgs.push({user:'[ADMIN]',text:txt,ts:Date.now(),isAdmin:true,to:'all'});localStorage.setItem('globalChat',JSON.stringify(msgs));}msg.value='';toast('Broadcast skickat!','ok');if(document.getElementById('chatMessages'))loadChatMsgs();}
 function adminGiveCoins(){var uEl=document.getElementById('adminCoinUser');var aEl=document.getElementById('adminCoinAmount');if(!uEl||!aEl||!uEl.value.trim())return toast('Ange ett användarnamn','error');var amount=parseInt(aEl.value)||0;if(amount<=0)return toast('Ange ett giltigt antal mynt','error');if(uEl.value.trim()===state.user){state.coins+=amount;saveState();updateHUD();}else{var key='jspel_'+uEl.value.trim();var data=JSON.parse(localStorage.getItem(key)||'{}');data.coins=(data.coins||0)+amount;localStorage.setItem(key,JSON.stringify(data));}toast(amount+' mynt gavs till '+uEl.value.trim(),'ok');uEl.value='';aEl.value='';renderAdminPanel();}
 function adminKick(u){if(u===state.user)return toast('Kan inte kicka dig själv','error');toast(u+' kickades','ok');}
