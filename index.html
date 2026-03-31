@@ -809,11 +809,10 @@ if(document.readyState==="loading"){
   initGoogleAdSlots();
 }
 try{
-  if(FIREBASE_CONFIG.projectId!=="DIN_FIREBASE_PROJECT_ID"){
-    if(!firebase.apps||!firebase.apps.length)firebase.initializeApp(FIREBASE_CONFIG);
+  if(firebaseConfig.projectId!=="DIN_FIREBASE_PROJECT_ID"){
+    if(!firebase.apps||!firebase.apps.length)firebase.initializeApp(firebaseConfig);
     _rtdb=firebase.database();
     window._onlineRtdb=_rtdb;
-    _rtdb=null;
     console.log("Firebase ansluten!");
   }else{
     console.log("Firebase ej konfigurerat - använder lokal lagring.");
@@ -3254,29 +3253,53 @@ document.addEventListener("DOMContentLoaded",function(){
 
   // ---- LIVE PRESENCE COUNTER (Realtime DB + fallback) ----
   var _presenceId=(state.user?('user_'+state.user):('guest_'+Math.random().toString(36).slice(2,8)));
-  function updatePresenceCount(){
-    if(window._onlineRtdb){
-      var now=Date.now();
-      var ref=window._onlineRtdb.ref('online_users/'+_presenceId);
-      ref.set({id:_presenceId,user:state.user||null,ts:now}).then(function(){
-        return window._onlineRtdb.ref('online_users').once('value');
-      }).then(function(snap){
-        var el=document.getElementById('onlineCount');
-        var all=snap.val()||{};
-        var n=Object.keys(all).filter(function(k){return all[k]&&all[k].ts>=now-70000;}).length;
-        if(el)el.textContent=n+' '+(T('online')||'online');
-      }).catch(function(){
-        var el=document.getElementById('onlineCount');
-        if(el)el.textContent='1 '+(T('online')||'online');
-      });
+  var _presenceUserRef=null;
+  var _presenceConnRef=null;
+  var _presenceListRef=null;
+  var _presenceConnectedRef=null;
+  function setOnlineCount(n){
+    var el=document.getElementById('onlineCount');
+    if(el)el.textContent=n+' '+(T('online')||'online');
+  }
+  function initRealtimePresence(){
+    if(!window._onlineRtdb){
+      setOnlineCount(1);
       return;
     }
-    var el=document.getElementById('onlineCount');
-    if(el)el.textContent='1 '+(T('online')||'online');
+    _presenceListRef=window._onlineRtdb.ref('Precense');
+    _presenceUserRef=_presenceListRef.child(_presenceId);
+    _presenceConnectedRef=window._onlineRtdb.ref('.info/connected');
+    _presenceConnectedRef.on('value',function(snap){
+      if(!snap.val())return;
+      _presenceConnRef=_presenceUserRef.push();
+      _presenceConnRef.onDisconnect().remove();
+      _presenceUserRef.onDisconnect().remove();
+      _presenceConnRef.set({
+        ts:firebase.database.ServerValue.TIMESTAMP,
+        user:state.user||null
+      });
+    });
+    _presenceListRef.on('value',function(snap){
+      var all=snap.val()||{};
+      var n=0;
+      Object.keys(all).forEach(function(userKey){
+        if(all[userKey]&&typeof all[userKey]==='object'){
+          var connCount=Object.keys(all[userKey]).filter(function(connKey){
+            return all[userKey][connKey]&&typeof all[userKey][connKey]==='object';
+          }).length;
+          if(connCount>0)n++;
+        }
+      });
+      setOnlineCount(n||1);
+    },function(){
+      setOnlineCount(1);
+    });
   }
-  updatePresenceCount();
-  setInterval(updatePresenceCount,20000);
-  window.addEventListener('beforeunload',function(){if(window._onlineRtdb){window._onlineRtdb.ref('online_users/'+_presenceId).remove().catch(function(){});}});
+  initRealtimePresence();
+  window.addEventListener('beforeunload',function(){
+    if(_presenceConnRef)_presenceConnRef.remove().catch(function(){});
+    if(_presenceUserRef)_presenceUserRef.remove().catch(function(){});
+  });
   applyLang();
   setTimeout(hideLoader, 600);
 });
