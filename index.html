@@ -519,6 +519,7 @@ html,body{height:100%;font-family:'Segoe UI',system-ui,sans-serif;background:var
     <button class="sideNavBtn" onclick="closeSidebar();openInventoryWindow()"><span class="sideNavIcon">🎒</span><span class="sideNavLabel">Inventory</span></button>
     <button class="sideNavBtn" onclick="openThemesWindow()"><span class="sideNavIcon">🎨</span><span class="sideNavLabel" data-i18n="nav_themes">Themes</span></button>
     <button class="sideNavBtn" onclick="closeSidebar();openPanelOverlay('settings')"><span class="sideNavIcon">⚙️</span><span class="sideNavLabel" data-i18n="nav_settings">Settings</span></button>
+    <button class="sideNavBtn" onclick="closeSidebar();openPanelOverlay('links')"><span class="sideNavIcon">⛓️</span><span class="sideNavLabel">Länkar</span></button>
   </nav>
   <div class="sideContent" id="sideContent">
     <div class="sidePanel active" id="panel_favoriter"></div>
@@ -1587,20 +1588,14 @@ function closeRoadmapPage(){
 }
 function renderLinksPanel(){
   var el=document.getElementById('linksOverlayBody');if(!el)return;
-  var links=[
-    {url:'https://docs.google.com/forms/d/e/1FAIpQLScUxR7Ychb0ivMguYI-3BHwb8D3ZH2x7n1vkpXuYjNeVlU3Cg/viewform?usp=header',icon:'💡',name:'Send suggestions',desc:'Öppna suggestionssformuläret'},
-    {url:'https://alv3333.github.io/Coola-Mattespel-Soundboard.github.io/',icon:'🎵',name:'Soundboard',desc:'Öppna extern soundboard'}
-  ];
-  var h='<div style="display:flex;flex-direction:column;gap:8px;padding:4px 0">';
-  links.forEach(function(l){
-    h+='<a href="'+l.url+'" target="_blank" rel="noopener" style="display:flex;align-items:center;gap:14px;padding:14px 16px;border-radius:14px;background:var(--glass);border:1px solid var(--line);text-decoration:none;transition:all .2s" onmouseenter="this.style.borderColor=\'var(--p1)\';this.style.background=\'rgba(123,44,255,.15)\'" onmouseleave="this.style.borderColor=\'var(--line)\';this.style.background=\'var(--glass)\'">';
-    h+='<span style="font-size:28px">'+l.icon+'</span>';
-    h+='<div style="flex:1;min-width:0"><div style="font-size:14px;font-weight:700;color:var(--w)">'+l.name+'</div><div style="font-size:12px;color:var(--d);margin-top:2px">'+l.desc+'</div></div>';
-    h+='<span style="color:var(--p1);font-size:18px">↗</span>';
-    h+='</a>';
-  });
-  h+='</div>';
-  el.innerHTML=h;
+  el.innerHTML=''
+    +'<div style="font-size:15px;font-weight:700;color:var(--w);margin-bottom:12px">Aktiva Coola Mattespel länkar:</div>'
+    +'<div style="display:flex;flex-direction:column;gap:10px;font-size:14px;line-height:1.5">'
+    +'<div>V5: <a href="https://coola-mattespel.github.io/V5/" target="_blank" rel="noopener">https://coola-mattespel.github.io/V5/</a></div>'
+    +'<div>V4: <a href="https://coola-mattespel.github.io/V4/" target="_blank" rel="noopener">https://coola-mattespel.github.io/V4/</a></div>'
+    +'<div>Discord: <a href="https://discord.gg/j5AFhXTGvd" target="_blank" rel="noopener">https://discord.gg/j5AFhXTGvd</a></div>'
+    +'<div style="margin-top:6px">RIP V2 🪦</div>'
+    +'</div>';
 }
 function updateGameQuestWidget(){
   var w=document.getElementById('gameQuestWidget');
