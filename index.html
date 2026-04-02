@@ -414,8 +414,6 @@ html,body{height:100%;font-family:'Segoe UI',system-ui,sans-serif;background:var
 .updates-list li{display:flex;align-items:flex-start;gap:8px;font-size:13px;color:var(--d);line-height:1.5;}
 .updates-list li .ul-dot{width:5px;height:5px;border-radius:50%;flex-shrink:0;margin-top:7px;}
 </style>
-<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-database-compat.js"></script>
 <script>
 (function(){
   var ADS_HOST_SUFFIXES=['googlesyndication.com','doubleclick.net','googleadservices.com'];
@@ -698,7 +696,6 @@ html,body{height:100%;font-family:'Segoe UI',system-ui,sans-serif;background:var
       <h1 data-i18n="heroTitle">Anchor Games</h1>
       <p class="hero-subtitle">Cool gamesite with over 1946+ games</p>
       <div class="discordBanner" onclick="window.open('https://discord.gg/j5AFhXTGvd','_blank','noopener')">Join the Discord: <a href="https://discord.gg/j5AFhXTGvd" target="_blank" rel="noopener" onclick="event.stopPropagation()">https://discord.gg/j5AFhXTGvd</a></div>
-      <div id="onlineCount" style="font-size:13px;color:var(--p1);margin-bottom:10px;font-weight:600;letter-spacing:.5px">...</div>
       <div class="hintRow">
         <span class="hintPill" data-i18n="pill_games">🎮 1 946 games</span>
         <span class="hintPill" data-i18n="pill_coins">🏆 Collect coins</span>
@@ -723,27 +720,8 @@ html,body{height:100%;font-family:'Segoe UI',system-ui,sans-serif;background:var
 
 <script>
 
-const firebaseConfig = {
-  apiKey: "AIzaSyDaqGgaoDtNwiBQQF_D0y9PpGwHmFPvP9o",
-  authDomain: "alphagamesite.firebaseapp.com",
-  databaseURL: "https://alphagamesite-default-rtdb.europe-west1.firebasedatabase.app",
-  projectId: "alphagamesite",
-  storageBucket: "alphagamesite.firebasestorage.app",
-  messagingSenderId: "195428890908",
-  appId: "1:195428890908:web:7633b44fe156fd25a2a2d9"
-};
 var _sb=null;
 var _rtdb=null;
-try{
-  if(firebaseConfig.projectId!=="DIN_FIREBASE_PROJECT_ID"){
-    if(!firebase.apps||!firebase.apps.length)firebase.initializeApp(firebaseConfig);
-    _rtdb=firebase.database();
-    window._onlineRtdb=_rtdb;
-    console.log("Firebase ansluten!");
-  }else{
-    console.log("Firebase not configured - using local storage.");
-  }
-}catch(e){console.warn("Firebase:",e);}
 
 /* ---- LJUD (Web Audio API) ---- */
 var _audioCtx=null;
@@ -3165,44 +3143,6 @@ document.addEventListener("DOMContentLoaded",function(){
   setInterval(function(){
   },3000);
 
-  // ---- LIVE PRESENCE COUNTER (Realtime DB + fallback) ----
-  var _presenceSessionId='sess_'+Math.random().toString(36).slice(2,12);
-  var _presenceSessionRef=null;
-  var _presenceListRef=null;
-  var _presenceConnectedRef=null;
-  function setOnlineCount(n){
-    var el=document.getElementById('onlineCount');
-    if(el)el.textContent=n+' '+(T('online')||'online');
-  }
-  function initRealtimePresence(){
-    if(!window._onlineRtdb){
-      setOnlineCount(1);
-      return;
-    }
-    _presenceListRef=window._onlineRtdb.ref('Precense');
-    _presenceSessionRef=_presenceListRef.child(_presenceSessionId);
-    _presenceConnectedRef=window._onlineRtdb.ref('.info/connected');
-    _presenceConnectedRef.on('value',function(snap){
-      if(!snap.val())return;
-      _presenceSessionRef.onDisconnect().remove();
-      _presenceSessionRef.set({
-        ts:firebase.database.ServerValue.TIMESTAMP,
-        user:state.user||null,
-        session:_presenceSessionId
-      });
-    });
-    _presenceListRef.on('value',function(snap){
-      var all=snap.val()||{};
-      var n=Object.keys(all).length;
-      setOnlineCount(Math.max(1,n));
-    },function(){
-      setOnlineCount(1);
-    });
-  }
-  initRealtimePresence();
-  window.addEventListener('beforeunload',function(){
-    if(_presenceSessionRef)_presenceSessionRef.remove().catch(function(){});
-  });
   applyLang();
   setTimeout(hideLoader, 600);
 });
@@ -3222,7 +3162,7 @@ en:{heroTitle:"Anchor Arcade",pill_games:"🎮 1,946 games",pill_coins:"🏆 Col
   stat_coins:"Coins",stat_favs:"Favorites",stat_played:"Games",stat_level:"Level",loginTitle:"Log in",regTitle:"Register",userLabel:"Username",passLabel:"Password",
   userPlaceholder:"your username...",passPlaceholder:"your password...",loginBtn:"Log in",regBtn:"Register",switchToReg:"No account? Register",switchToLogin:"Have an account? Log in",
   noFavs:"No favorites yet\nClick ☆ on a game",notLoggedFavs:"Log in to see favorites",colors_purple:"Purple",colors_neon:"Neon",colors_gold:"Gold",
-  colors_red:"Red",colors_blue:"Blue",colors_pink:"Pink",online:"online now",close:"Close",loading:"Loading...",add_friend:"Add friend",remove_friend:"Remove friend",
+  colors_red:"Red",colors_blue:"Blue",colors_pink:"Pink",close:"Close",loading:"Loading...",add_friend:"Add friend",remove_friend:"Remove friend",
   nav_quests:"Quests",nav_leaderboard:"Leaderboard",nav_achievements:"Achievements",nav_soundboard:"Soundboard",nav_shop:"Shop",nav_inventory:"Inventory",quest_claim:"Claim",quest_claimed:"✅ Claimed",
   quest_daily:"Daily",quest_social:"Social",quest_milestone:"Milestones",quest_no_login:"Log in to see quests",ach_no_login:"Log in to see achievements",lb_title:"Leaderboard",shop_title:"Shop",inv_title:"Inventory",
   streak_days:"day streak 🔥",rate_title:"Rate game",profile_edit:"Edit",profile_view:"View profile",profile_joined:"Joined",profile_showcase:"Showcase",profile_pinned:"Pinned games",
